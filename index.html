@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIUA Music - Lite</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4A6670;
+            --secondary: #8DA399;
+            --accent: #6B9080;
+            --background: #F4F7F6;
+            --text: #2D3A3A;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .notification {
+            position: fixed;
+            top: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent);
+            color: white;
+            padding: 5px 8px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 3px 10px rgba(107, 144, 128, 0.2);
+            transition: top 0.4s ease;
+            z-index: 1000;
+            font-size: 0.95rem;
+        }
+
+        .notification.show {
+            top: 10px;
+        }
+
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .search-container {
+            max-width: 600px;
+            margin: -30px auto 40px;
+            position: relative;
+            padding: 0 15px;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 12px 25px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            font-size: 0.95rem;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        #searchInput:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 8px rgba(107, 144, 128, 0.2);
+        }
+
+        .music-list {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .music-item {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease;
+        }
+
+        .music-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .cover-art {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            object-fit: cover;
+            background: #eee;
+        }
+
+        .music-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .music-title {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 4px;
+            font-size: 1rem;
+        }
+
+        .artist-name {
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .play-btn {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .play-btn:hover {
+            background: #7A8F87;
+        }
+
+        .download-btn {
+            background: var(--accent);
+            color: white;
+        }
+
+        .download-btn:hover {
+            background: #5B7A6D;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .page-btn {
+            padding: 8px 14px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .page-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .page-btn:hover:not(.active) {
+            background: #f0f0f0;
+        }
+
+        @media (max-width: 768px) {
+            .music-item {
+                flex-wrap: wrap;
+                gap: 12px;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .search-container {
+                margin: -25px auto 30px;
+            }
+            
+            .page-btn {
+                padding: 6px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="notification" id="notification">
+        <i class="fas fa-info-circle"></i>
+        <span>
+            Aviso!
+            Este site é apenas de teste de fubcionalidade. Portanto,
+            <strong>não representa o produto final</strong> do meu site. Estou trabalhando para trazer um site com mais funcionalidades e design mais agradável.
+            Obrigado por acessar o meu site.
+            <strong>Coragem Diua</strong>
+        </span>
+    </div>
+
+    <header>
+        <h1>DIUA Music - Lite</h1>
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Pesquisar por música ou artista...">
+        </div>
+    </header>
+
+    <div class="music-list" id="musicList"></div>
+    <div class="pagination" id="pagination"></div>
+
+    <script>
+        // Notificação
+        const showNotification = () => {
+            const notification = document.getElementById('notification');
+            setTimeout(() => notification.classList.add('show'), 500);
+            setTimeout(() => notification.classList.remove('show'), 10500);
+        }
+
+        // Dados das músicas (30 músicas de exemplo)
+        const songs = [
+    {
+        title: "A tua Chori (Prod by Dodo Beats)",
+        artist: "Asta X Best",
+        cover: "1742986400340.jpg",
+        file: "Asta_X_Best_A_tua_Chori_Prodby_Dodo_Beats.mp3"
+    }
+];
+
+        // Configuração de paginação
+        let currentPage = 1;
+        const itemsPerPage = 5;
+
+        // Renderização
+        function renderSongs() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const filteredSongs = songs.filter(song => 
+                song.title.toLowerCase().includes(searchTerm) ||
+                song.artist.toLowerCase().includes(searchTerm)
+            );
+
+            const start = (currentPage - 1) * itemsPerPage;
+            const paginatedSongs = filteredSongs.slice(start, start + itemsPerPage);
+
+            const musicList = document.getElementById('musicList');
+            musicList.innerHTML = paginatedSongs.map(song => `
+                <div class="music-item">
+                    <img src="${song.cover}" alt="Capa" class="cover-art">
+                    <div class="music-info">
+                        <div class="music-title">${song.title}</div>
+                        <div class="artist-name">${song.artist}</div>
+                    </div>
+                    <button class="btn play-btn" onclick="playSong('${song.file}')">
+                        <i class="fas fa-play"></i> Ouvir
+                    </button>
+                    <a href="${song.file}" download class="btn download-btn">
+                        <i class="fas fa-download"></i> Baixar
+                    </a>
+                </div>
+            `).join('');
+
+            renderPagination(filteredSongs.length);
+        }
+
+        // Paginação
+        function renderPagination(totalItems) {
+            const pageCount = Math.ceil(totalItems / itemsPerPage);
+            const pagination = document.getElementById('pagination');
+            
+            let buttons = [];
+            if(pageCount > 1) {
+                buttons.push(`<button class="page-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>Anterior</button>`);
+                
+                for(let i = 1; i <= pageCount; i++) {
+                    buttons.push(
+                        `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`
+                    );
+                }
+                
+                buttons.push(`<button class="page-btn" onclick="changePage(${currentPage + 1})" ${currentPage === pageCount ? 'disabled' : ''}>Próxima</button>`);
+            }
+            
+            pagination.innerHTML = buttons.join('');
+        }
+
+        // Mudar página
+        function changePage(newPage) {
+            const totalPages = Math.ceil(songs.length / itemsPerPage);
+            if(newPage < 1 || newPage > totalPages) return;
+            currentPage = newPage;
+            renderSongs();
+        }
+
+        // Reproduzir música
+        function playSong(file) {
+            new Audio(file).play().catch(() => alert('Permita a reprodução de áudio no navegador'));
+        }
+
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('input', () => {
+            currentPage = 1;
+            renderSongs();
+        });
+
+        // Inicialização
+        showNotification();
+        renderSongs();
+    </script>
+</body>
+</html>
